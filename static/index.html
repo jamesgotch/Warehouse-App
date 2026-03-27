@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Warehouse Inventory</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>Warehouse Inventory</h1>
+  <div id="inventory-container">
+    <p id="loading">Loading inventory...</p>
+    <table id="inventory-table" hidden>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Brand</th>
+          <th>Size</th>
+          <th>Color</th>
+          <th>Quantity</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody id="inventory-body"></tbody>
+    </table>
+    <p id="error-msg" hidden></p>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
