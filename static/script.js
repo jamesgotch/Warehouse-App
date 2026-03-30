@@ -69,9 +69,14 @@ function init() {
   $('delete-confirm').addEventListener('click', executeDelete);
   $('delete-modal').addEventListener('click',   e => { if (e.target === $('delete-modal')) closeDeleteModal(); });
 
+  // Info modal
+  $('info-btn').addEventListener('click',  () => { $('info-modal').hidden = false; });
+  $('info-close').addEventListener('click', () => { $('info-modal').hidden = true; });
+  $('info-modal').addEventListener('click', e => { if (e.target === $('info-modal')) $('info-modal').hidden = true; });
+
   // Esc key
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeModal(); closeDeleteModal(); }
+    if (e.key === 'Escape') { closeModal(); closeDeleteModal(); $('info-modal').hidden = true; }
   });
 }
 

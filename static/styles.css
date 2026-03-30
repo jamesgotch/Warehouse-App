@@ -136,6 +136,25 @@ body {
   padding: 4px 10px;
 }
 
+.btn-info {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 4px 11px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-info:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
 /* ── Main Content ─────────────────────────────────────────────────────────── */
 .main-content {
   max-width: 1560px;
@@ -679,7 +698,8 @@ body {
   animation: modal-in 0.18s ease;
 }
 
-.modal-sm { max-width: 390px; }
+.modal-sm   { max-width: 390px; }
+.modal-info { max-width: 660px; }
 
 @keyframes modal-in {
   from { opacity: 0; transform: scale(0.95) translateY(8px); }
@@ -795,6 +815,91 @@ body {
   font-size: 12px;
   color: var(--text-muted);
 }
+
+/* ── README Modal Body ───────────────────────────────────────────────────── */
+.readme-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-top: 14px !important;
+}
+
+.readme-body::-webkit-scrollbar        { width: 6px; }
+.readme-body::-webkit-scrollbar-track  { background: transparent; }
+.readme-body::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 3px; }
+
+.readme-lead {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+
+.readme-lead strong { color: var(--text); }
+
+.readme-h3 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  margin-top: 20px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.readme-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  margin-bottom: 4px;
+}
+
+.readme-table th {
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: var(--elevated);
+  border-bottom: 1px solid var(--border);
+}
+
+.readme-table td {
+  padding: 7px 10px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border-sub);
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.readme-table tbody tr:last-child td { border-bottom: none; }
+.readme-table code {
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11.5px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--accent);
+}
+
+.method {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  letter-spacing: 0.03em;
+}
+
+.method.get    { background: var(--accent-bg);  color: var(--accent);  border: 1px solid var(--blue-border); }
+.method.post   { background: var(--green-bg);   color: var(--green);   border: 1px solid var(--green-border); }
+.method.put    { background: var(--orange-bg);  color: var(--orange);  border: 1px solid var(--orange-border); }
+.method.delete { background: var(--red-bg);     color: var(--red);     border: 1px solid var(--red-border); }
 
 /* ── Toast ────────────────────────────────────────────────────────────────── */
 .toast-container {

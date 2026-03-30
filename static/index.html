@@ -33,6 +33,7 @@
         </svg>
         warehouse.db
       </span>
+      <button class="btn-info" id="info-btn" title="About this app">Info</button>
     </div>
   </nav>
 
@@ -292,6 +293,76 @@
           </svg>
           Delete
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INFO / README MODAL ────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="info-modal" hidden>
+    <div class="modal-dialog modal-info">
+      <div class="modal-header">
+        <h2 class="modal-title">About WMS</h2>
+        <button class="modal-close" id="info-close" title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body readme-body">
+
+        <p class="readme-lead">A full-stack inventory management app for a sports warehouse. Built with <strong>FastAPI</strong>, <strong>SQLModel</strong>, and <strong>SQLite</strong> on the backend, and a vanilla HTML/CSS/JS frontend served as static files.</p>
+
+        <h3 class="readme-h3">Dashboard Stats</h3>
+        <table class="readme-table">
+          <thead><tr><th>Stat</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>Total SKUs</td><td>Number of unique inventory records</td></tr>
+            <tr><td>Total Units</td><td>Sum of all stock quantities</td></tr>
+            <tr><td>Total Value</td><td>Combined value of all stock (quantity &times; price)</td></tr>
+            <tr><td>Categories</td><td>Number of distinct product categories</td></tr>
+            <tr><td>Low Stock</td><td>Items with fewer than 20 units remaining</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="readme-h3">API Endpoints</h3>
+        <table class="readme-table">
+          <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method get">GET</span></td><td><code>/inventory</code></td><td>Return all records</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code>/inventory/{id}</code></td><td>Return a single record</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code>/inventory</code></td><td>Create a new record</td></tr>
+            <tr><td><span class="method put">PUT</span></td><td><code>/inventory/{id}</code></td><td>Update a record</td></tr>
+            <tr><td><span class="method delete">DELETE</span></td><td><code>/inventory/{id}</code></td><td>Delete a record</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code>/stats</code></td><td>Return dashboard statistics</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="readme-h3">Database Schema</h3>
+        <table class="readme-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>id</code></td><td>INTEGER</td><td>Primary key, auto-incremented</td></tr>
+            <tr><td><code>name</code></td><td>TEXT</td><td>Product name — required</td></tr>
+            <tr><td><code>category</code></td><td>TEXT</td><td>Footwear, Apparel, Equipment, Accessories</td></tr>
+            <tr><td><code>brand</code></td><td>TEXT</td><td>e.g. Nike, Adidas, Wilson</td></tr>
+            <tr><td><code>size</code></td><td>TEXT</td><td>e.g. M, L, XL, 9, 10, 11</td></tr>
+            <tr><td><code>color</code></td><td>TEXT</td><td>e.g. Black, White, Grey</td></tr>
+            <tr><td><code>quantity</code></td><td>INTEGER</td><td>Units in stock, defaults to 0</td></tr>
+            <tr><td><code>price</code></td><td>REAL</td><td>Unit price in USD</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="readme-h3">Tech Stack</h3>
+        <table class="readme-table">
+          <thead><tr><th>Layer</th><th>Technology</th></tr></thead>
+          <tbody>
+            <tr><td>Backend</td><td>Python, FastAPI</td></tr>
+            <tr><td>ORM</td><td>SQLModel</td></tr>
+            <tr><td>Database</td><td>SQLite (<code>warehouse.db</code>)</td></tr>
+            <tr><td>Frontend</td><td>HTML, CSS, JavaScript (vanilla)</td></tr>
+          </tbody>
+        </table>
+
       </div>
     </div>
   </div>
