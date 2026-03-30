@@ -3,30 +3,302 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Warehouse Inventory</title>
+  <title>WMS — Warehouse Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>Warehouse Inventory</h1>
-  <div id="inventory-container">
-    <p id="loading">Loading inventory...</p>
-    <table id="inventory-table" hidden>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Category</th>
-          <th>Brand</th>
-          <th>Size</th>
-          <th>Color</th>
-          <th>Quantity</th>
-          <th>Price</th>
-        </tr>
-      </thead>
-      <tbody id="inventory-body"></tbody>
-    </table>
-    <p id="error-msg" hidden></p>
+
+  <!-- ── NAVBAR ─────────────────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span class="brand-name">WMS</span>
+      <span class="brand-sub">Warehouse Management</span>
+    </div>
+    <div class="nav-right">
+      <span class="live-badge">
+        <span class="live-dot"></span>
+        Live
+      </span>
+      <span class="db-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+          <ellipse cx="12" cy="5" rx="9" ry="3"/>
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+        </svg>
+        warehouse.db
+      </span>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ───────────────────────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- STATS ROW -->
+    <div class="stats-row">
+      <div class="stat-card" id="stat-skus">
+        <div class="stat-icon-wrapper blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value loading-val" id="val-skus">—</div>
+          <div class="stat-label">Total SKUs</div>
+        </div>
+      </div>
+      <div class="stat-card" id="stat-units">
+        <div class="stat-icon-wrapper green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value loading-val" id="val-units">—</div>
+          <div class="stat-label">Total Units</div>
+        </div>
+      </div>
+      <div class="stat-card" id="stat-value">
+        <div class="stat-icon-wrapper purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value loading-val" id="val-value">—</div>
+          <div class="stat-label">Inventory Value</div>
+        </div>
+      </div>
+      <div class="stat-card" id="stat-cats">
+        <div class="stat-icon-wrapper orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="15" y="3" width="7" height="7" rx="1"/>
+            <rect x="15" y="15" width="7" height="7" rx="1"/><rect x="2" y="15" width="7" height="7" rx="1"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value loading-val" id="val-cats">—</div>
+          <div class="stat-label">Categories</div>
+        </div>
+      </div>
+      <div class="stat-card" id="stat-lowstock">
+        <div class="stat-icon-wrapper red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value loading-val" id="val-lowstock">—</div>
+          <div class="stat-label">Low Stock</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="table-card">
+
+      <!-- TOOLBAR -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="search-input" placeholder="Search by name, brand, color…" autocomplete="off" />
+            <button class="search-clear" id="search-clear" hidden title="Clear">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <select id="category-filter" class="filter-select" title="Filter by category">
+            <option value="">All Categories</option>
+            <option value="Footwear">Footwear</option>
+            <option value="Apparel">Apparel</option>
+            <option value="Equipment">Equipment</option>
+            <option value="Accessories">Accessories</option>
+          </select>
+          <select id="stock-filter" class="filter-select" title="Filter by stock level">
+            <option value="">All Stock Levels</option>
+            <option value="low">Low Stock (&lt;20)</option>
+            <option value="medium">Medium (20–49)</option>
+            <option value="high">Well Stocked (50+)</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <span class="item-count" id="item-count">— items</span>
+          <button class="btn-primary" id="add-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add Item
+          </button>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="th-sort" data-col="id">ID <span class="sort-arrow">↕</span></th>
+              <th class="th-sort" data-col="name">Name <span class="sort-arrow">↕</span></th>
+              <th class="th-sort" data-col="category">Category <span class="sort-arrow">↕</span></th>
+              <th class="th-sort" data-col="brand">Brand <span class="sort-arrow">↕</span></th>
+              <th class="th-sort" data-col="size">Size <span class="sort-arrow">↕</span></th>
+              <th class="th-sort" data-col="color">Color <span class="sort-arrow">↕</span></th>
+              <th class="th-sort" data-col="quantity">Quantity <span class="sort-arrow">↕</span></th>
+              <th class="th-sort" data-col="price">Price <span class="sort-arrow">↕</span></th>
+              <th class="th-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr class="loading-row">
+              <td colspan="9">
+                <div class="loading-spinner">
+                  <div class="spinner"></div>
+                  <span>Loading inventory…</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TABLE FOOTER -->
+      <div class="table-footer">
+        <span id="footer-info">Loading…</span>
+        <div class="footer-right">
+          <label class="page-size-label" for="page-size-select">Rows per page</label>
+          <select id="page-size-select" class="page-size-select">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="150">150</option>
+            <option value="200">200</option>
+            <option value="250">250</option>
+            <option value="300">300</option>
+          </select>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── ITEM MODAL (Add / Edit) ────────────────────────────────────────── -->
+  <div class="modal-overlay" id="item-modal" hidden>
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title">Add Item</h2>
+        <button class="modal-close" id="modal-close" title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form class="modal-body" id="item-form" novalidate>
+        <input type="hidden" id="form-id" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="form-name">Product Name <span class="required">*</span></label>
+            <input class="form-input" type="text" id="form-name" placeholder="e.g. Air Max 90" required />
+          </div>
+        </div>
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label class="form-label" for="form-category">Category</label>
+            <select class="form-input" id="form-category">
+              <option value="">— Select —</option>
+              <option value="Footwear">Footwear</option>
+              <option value="Apparel">Apparel</option>
+              <option value="Equipment">Equipment</option>
+              <option value="Accessories">Accessories</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="form-brand">Brand</label>
+            <input class="form-input" type="text" id="form-brand" placeholder="e.g. Nike" />
+          </div>
+        </div>
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label class="form-label" for="form-size">Size</label>
+            <input class="form-input" type="text" id="form-size" placeholder="e.g. M, 10, 42" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="form-color">Color</label>
+            <input class="form-input" type="text" id="form-color" placeholder="e.g. Black" />
+          </div>
+        </div>
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label class="form-label" for="form-quantity">Quantity <span class="required">*</span></label>
+            <input class="form-input" type="number" id="form-quantity" placeholder="0" min="0" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="form-price">Price ($) <span class="required">*</span></label>
+            <input class="form-input" type="number" id="form-price" placeholder="0.00" min="0" step="0.01" required />
+          </div>
+        </div>
+        <div class="form-error" id="form-error" hidden></div>
+      </form>
+      <div class="modal-footer">
+        <button class="btn-ghost" id="modal-cancel">Cancel</button>
+        <button class="btn-primary" id="modal-save">
+          <span id="save-label">Save Item</span>
+        </button>
+      </div>
+    </div>
   </div>
+
+  <!-- ── DELETE CONFIRMATION ────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="delete-modal" hidden>
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title danger-title">Delete Item</h2>
+        <button class="modal-close" id="delete-close" title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body delete-body">
+        <div class="delete-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="44" height="44">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <p class="delete-msg">Are you sure you want to delete <strong id="delete-item-name"></strong>?</p>
+        <p class="delete-sub">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" id="delete-cancel">Cancel</button>
+        <button class="btn-danger" id="delete-confirm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TOAST CONTAINER ───────────────────────────────────────────────── -->
+  <div class="toast-container" id="toast-container"></div>
+
   <script src="script.js"></script>
 </body>
 </html>

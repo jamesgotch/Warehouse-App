@@ -13,4 +13,24 @@ class Inventory(SQLModel, table=True):
     price: float
 
 
+class InventoryCreate(SQLModel):
+    name: str
+    category: Optional[str] = None
+    brand: Optional[str] = None
+    size: Optional[str] = None
+    color: Optional[str] = None
+    quantity: int = 0
+    price: float
+
+
+class InventoryUpdate(SQLModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    brand: Optional[str] = None
+    size: Optional[str] = None
+    color: Optional[str] = None
+    quantity: Optional[int] = None
+    price: Optional[float] = None
+
+
 engine = create_engine("sqlite:///warehouse.db")
