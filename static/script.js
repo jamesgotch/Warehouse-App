@@ -6,8 +6,9 @@ const state = {
   sortDir:  'asc',
   page:     1,
   pageSize: 25,
-  editingId: null,
-  deleteId:  null,
+  editingId:   null,
+  deleteId:    null,
+  currentUser: null,
 };
 
 /* ── DOM helpers ───────────────────────────────────────────────────────────── */
@@ -20,8 +21,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function init() {
-  loadInventory();
-  loadStats();
+  checkAuth();
+
+  // Login modal
+  $('login-btn').addEventListener('click',    openLoginModal);
+  $('auth-login-btn').addEventListener('click', openLoginModal);
+  $('login-close').addEventListener('click',  closeLoginModal);
+  $('login-cancel').addEventListener('click', closeLoginModal);
+  $('login-save').addEventListener('click',   submitLogin);
+  $('login-modal').addEventListener('click',  e => { if (e.target === $('login-modal')) closeLoginModal(); });
+  $('login-form').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitLogin(); } });
+
+  // Logout
+  $('logout-btn').addEventListener('click', executeLogout);
+
+  // Auth screen register
+  $('register-btn').addEventListener('click', () => openRegisterModal());
+  $('auth-register-btn').addEventListener('click', () => openRegisterModal());
 
   // Search
   $('search-input').addEventListener('input', () => {
@@ -74,16 +90,70 @@ function init() {
   $('info-close').addEventListener('click', () => { $('info-modal').hidden = true; });
   $('info-modal').addEventListener('click', e => { if (e.target === $('info-modal')) $('info-modal').hidden = true; });
 
+  // Logs drawer
+  $('logs-btn').addEventListener('click',     openLogsDrawer);
+  $('logs-close').addEventListener('click',   closeLogsDrawer);
+  $('logs-refresh').addEventListener('click', loadLogs);
+  $('logs-backdrop').addEventListener('click', closeLogsDrawer);
+
+  // Register modal — also wired from auth screen in init()
+  $('register-close').addEventListener('click', closeRegisterModal);
+  $('register-cancel').addEventListener('click', closeRegisterModal);
+  $('register-save').addEventListener('click', submitRegister);
+  $('register-modal').addEventListener('click', e => { if (e.target === $('register-modal')) closeRegisterModal(); });
+  $('register-form').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitRegister(); } });
+
   // Esc key
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeModal(); closeDeleteModal(); $('info-modal').hidden = true; }
+    if (e.key === 'Escape') { closeModal(); closeDeleteModal(); closeRegisterModal(); closeLoginModal(); closeLogsDrawer(); $('info-modal').hidden = true; }
   });
+}
+
+/* ── Auth ──────────────────────────────────────────────────────────────────── */
+async function checkAuth() {
+  try {
+    const res = await fetch('/me');
+    if (res.ok) {
+      const user = await res.json();
+      state.currentUser = user;
+      setAuthUI(user);
+      loadInventory();
+      loadStats();
+    } else {
+      setAuthUI(null);
+    }
+  } catch {
+    setAuthUI(null);
+  }
+}
+
+function showLoggedOutState() {
+  $('auth-screen').hidden = false;
+}
+
+function setAuthUI(user) {
+  const loggedIn = !!user;
+  $('auth-screen').hidden     = loggedIn;
+  $('login-btn').hidden       = loggedIn;
+  $('register-btn').hidden    = loggedIn;
+  $('logs-btn').hidden        = !loggedIn;
+  $('user-greeting').hidden   = !loggedIn;
+  $('logout-btn').hidden      = !loggedIn;
+  if (user) $('user-greeting').textContent = user.username;
+  if (!loggedIn) closeLogsDrawer();
+}
+
+function handleSessionExpired() {
+  state.currentUser = null;
+  setAuthUI(null);
+  showToast('Session expired — please log in again', 'error');
 }
 
 /* ── Data ──────────────────────────────────────────────────────────────────── */
 async function loadInventory() {
   try {
     const res = await fetch('/inventory');
+    if (res.status === 401) { handleSessionExpired(); return; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     state.items = await res.json();
     applyFilters();
@@ -103,6 +173,7 @@ async function loadInventory() {
 async function loadStats() {
   try {
     const res = await fetch('/stats');
+    if (res.status === 401) { handleSessionExpired(); return; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const s = await res.json();
     $('val-skus').textContent     = s.total_skus.toLocaleString();
@@ -356,6 +427,7 @@ async function saveItem() {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload),
     });
+    if (res.status === 401) { handleSessionExpired(); return; }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || `HTTP ${res.status}`);
@@ -397,6 +469,7 @@ async function executeDelete() {
   btn.disabled    = true;
   try {
     const res = await fetch(`/inventory/${id}`, { method: 'DELETE' });
+    if (res.status === 401) { handleSessionExpired(); return; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     closeDeleteModal();
     await Promise.all([loadInventory(), loadStats()]);
@@ -449,5 +522,194 @@ function cssColor(name) {
     pink: '#ec4899', gold: '#d97706', silver: '#94a3b8',
   };
   return map[(name || '').toLowerCase()] || '#6b7280';
+}
+
+/* ── Login Modal ──────────────────────────────────────────────────────────── */
+function openLoginModal() {
+  $('login-form').reset();
+  $('login-error').hidden = true;
+  ['login-username', 'login-password'].forEach(id => $(id).classList.remove('invalid'));
+  $('login-modal').hidden = false;
+  setTimeout(() => $('login-username').focus(), 60);
+}
+
+function closeLoginModal() {
+  $('login-modal').hidden = true;
+}
+
+async function submitLogin() {
+  const username = $('login-username').value.trim();
+  const password = $('login-password').value;
+
+  let valid = true;
+  ['login-username', 'login-password'].forEach(id => $(id).classList.remove('invalid'));
+  $('login-error').hidden = true;
+
+  if (!username) { $('login-username').classList.add('invalid'); valid = false; }
+  if (!password) { $('login-password').classList.add('invalid'); valid = false; }
+  if (!valid) { showLoginError('Please fill in all fields.'); return; }
+
+  const btn = $('login-save');
+  $('login-label').textContent = 'Logging in…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    const user = await res.json();
+    state.currentUser = user;
+    setAuthUI(user);
+    closeLoginModal();
+    showToast(`Welcome back, ${escHtml(user.username)}!`, 'success');
+    loadInventory();
+    loadStats();
+  } catch (err) {
+    $('login-username').classList.add('invalid');
+    $('login-password').classList.add('invalid');
+    showLoginError(err.message);
+  } finally {
+    $('login-label').textContent = 'Log In';
+    btn.disabled = false;
+  }
+}
+
+function showLoginError(msg) {
+  const el = $('login-error');
+  el.textContent = msg;
+  el.hidden = false;
+}
+
+async function executeLogout() {
+  await fetch('/logout', { method: 'POST' });
+  state.currentUser = null;
+  state.items = [];
+  state.filtered = [];
+  setAuthUI(null);
+  $('table-body').innerHTML = '';
+  showToast('Logged out successfully', 'info');
+  openLoginModal();
+}
+
+/* ── Register Modal ────────────────────────────────────────────────────────── */
+function openRegisterModal() {
+  $('register-form').reset();
+  $('reg-error').hidden = true;
+  ['reg-username', 'reg-password', 'reg-confirm'].forEach(id => $(id).classList.remove('invalid'));
+  $('register-modal').hidden = false;
+  setTimeout(() => $('reg-username').focus(), 60);
+}
+
+function closeRegisterModal() {
+  $('register-modal').hidden = true;
+}
+
+async function submitRegister() {
+  const username = $('reg-username').value.trim();
+  const password = $('reg-password').value;
+  const confirm  = $('reg-confirm').value;
+
+  let valid = true;
+  ['reg-username', 'reg-password', 'reg-confirm'].forEach(id => $(id).classList.remove('invalid'));
+  $('reg-error').hidden = true;
+
+  if (!username) { $('reg-username').classList.add('invalid'); valid = false; }
+  if (!password) { $('reg-password').classList.add('invalid'); valid = false; }
+  if (!confirm)  { $('reg-confirm').classList.add('invalid');  valid = false; }
+  if (!valid) { showRegError('Please fill in all required fields.'); return; }
+
+  if (password !== confirm) {
+    $('reg-password').classList.add('invalid');
+    $('reg-confirm').classList.add('invalid');
+    showRegError('Passwords do not match.');
+    return;
+  }
+
+  const btn = $('register-save');
+  $('register-label').textContent = 'Creating…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    closeRegisterModal();
+    showToast(`Account "${escHtml(username)}" created successfully`, 'success');
+  } catch (err) {
+    showRegError(err.message);
+  } finally {
+    $('register-label').textContent = 'Create Account';
+    btn.disabled = false;
+  }
+}
+
+function showRegError(msg) {
+  const el = $('reg-error');
+  el.textContent = msg;
+  el.hidden = false;
+}
+
+/* ── Logs Drawer ───────────────────────────────────────────────────────────── */
+function openLogsDrawer() {
+  $('logs-drawer').hidden   = false;
+  $('logs-backdrop').hidden = false;
+  loadLogs();
+}
+
+function closeLogsDrawer() {
+  $('logs-drawer').hidden   = true;
+  $('logs-backdrop').hidden = true;
+}
+
+const ACTION_LABELS = {
+  register:    { label: 'Registered',   cls: 'log-register'  },
+  login:       { label: 'Logged In',    cls: 'log-login'     },
+  logout:      { label: 'Logged Out',   cls: 'log-logout'    },
+  create_item: { label: 'Item Added',   cls: 'log-create'    },
+  update_item: { label: 'Item Updated', cls: 'log-update'    },
+  delete_item: { label: 'Item Deleted', cls: 'log-delete'    },
+};
+
+async function loadLogs() {
+  $('logs-body').innerHTML = `<div class="logs-loading"><div class="spinner"></div><span>Loading…</span></div>`;
+  try {
+    const res = await fetch('/logs');
+    if (res.status === 401) { handleSessionExpired(); return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const logs = await res.json();
+
+    if (logs.length === 0) {
+      $('logs-body').innerHTML = `<div class="logs-empty">No audit logs yet.</div>`;
+      return;
+    }
+
+    $('logs-body').innerHTML = logs.map(log => {
+      const meta  = ACTION_LABELS[log.action] || { label: log.action, cls: 'log-default' };
+      const date  = new Date(log.timestamp);
+      const time  = date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+      return `<div class="log-entry">
+        <span class="log-badge ${meta.cls}">${escHtml(meta.label)}</span>
+        <div class="log-info">
+          <span class="log-user">${escHtml(log.username)}</span>
+          <span class="log-detail">${escHtml(log.detail)}</span>
+        </div>
+        <span class="log-time">${escHtml(time)}</span>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    $('logs-body').innerHTML = `<div class="logs-empty">Failed to load logs: ${escHtml(err.message)}</div>`;
+  }
 }
 

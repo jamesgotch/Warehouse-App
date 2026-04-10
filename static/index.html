@@ -34,11 +34,34 @@
         warehouse.db
       </span>
       <button class="btn-info" id="info-btn" title="About this app">Info</button>
+      <button class="btn-logs" id="logs-btn" hidden title="Audit logs">Logs</button>
+      <button class="btn-login" id="login-btn" title="Log in">Log in</button>
+      <button class="btn-register" id="register-btn" title="Create an account">Register</button>
+      <span class="user-greeting" id="user-greeting" hidden></span>
+      <button class="btn-logout" id="logout-btn" hidden>Log out</button>
     </div>
   </nav>
 
   <!-- ── MAIN ───────────────────────────────────────────────────────────── -->
   <main class="main-content">
+
+    <!-- AUTH SCREEN (shown when logged out) -->
+    <div id="auth-screen" class="auth-screen">
+      <div class="auth-card">
+        <div class="auth-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </div>
+        <h1 class="auth-title">Warehouse Management</h1>
+        <p class="auth-sub">Sign in to your account or create a new one to get started.</p>
+        <div class="auth-actions">
+          <button class="btn-primary auth-action-btn" id="auth-login-btn">Log In</button>
+          <button class="btn-ghost auth-action-btn"  id="auth-register-btn">Create Account</button>
+        </div>
+      </div>
+    </div>
 
     <!-- STATS ROW -->
     <div class="stats-row">
@@ -328,12 +351,28 @@
         <table class="readme-table">
           <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
           <tbody>
+            <tr><td><span class="method post">POST</span></td><td><code>/register</code></td><td>Create a new user account</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code>/login</code></td><td>Log in and receive a session cookie</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code>/logout</code></td><td>Invalidate the current session</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code>/me</code></td><td>Return the currently logged-in user</td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/inventory</code></td><td>Return all records</td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/inventory/{id}</code></td><td>Return a single record</td></tr>
             <tr><td><span class="method post">POST</span></td><td><code>/inventory</code></td><td>Create a new record</td></tr>
             <tr><td><span class="method put">PUT</span></td><td><code>/inventory/{id}</code></td><td>Update a record</td></tr>
             <tr><td><span class="method delete">DELETE</span></td><td><code>/inventory/{id}</code></td><td>Delete a record</td></tr>
             <tr><td><span class="method get">GET</span></td><td><code>/stats</code></td><td>Return dashboard statistics</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="readme-h3">Authentication</h3>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">All inventory and stats endpoints require a valid session. Sessions are maintained via an HTTP-only cookie set on login.</p>
+        <table class="readme-table">
+          <thead><tr><th>Step</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>Register</td><td>Choose a username and password — passwords are hashed with <strong>bcrypt</strong> before storage</td></tr>
+            <tr><td>Log In</td><td>A secure random session token is created and stored in the database, then sent as an HTTP-only cookie</td></tr>
+            <tr><td>Requests</td><td>The browser automatically includes the cookie; the server validates it on every protected route</td></tr>
+            <tr><td>Log Out</td><td>The session token is deleted from the database and the cookie is cleared</td></tr>
           </tbody>
         </table>
 
@@ -366,6 +405,110 @@
       </div>
     </div>
   </div>
+
+  <!-- ── LOGIN MODAL ───────────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="login-modal" hidden>
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">Log In</h2>
+        <button class="modal-close" id="login-close" title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form class="modal-body" id="login-form" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="login-username">Username <span class="required">*</span></label>
+            <input class="form-input" type="text" id="login-username" placeholder="Your username" required autocomplete="username" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password <span class="required">*</span></label>
+            <input class="form-input" type="password" id="login-password" placeholder="Your password" required autocomplete="current-password" />
+          </div>
+        </div>
+        <div class="form-error" id="login-error" hidden></div>
+      </form>
+      <div class="modal-footer">
+        <button class="btn-ghost" id="login-cancel">Cancel</button>
+        <button class="btn-primary" id="login-save">
+          <span id="login-label">Log In</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REGISTER MODAL ─────────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="register-modal" hidden>
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">Create Account</h2>
+        <button class="modal-close" id="register-close" title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form class="modal-body" id="register-form" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="reg-username">Username <span class="required">*</span></label>
+            <input class="form-input" type="text" id="reg-username" placeholder="Choose a username" required autocomplete="username" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Password <span class="required">*</span></label>
+            <input class="form-input" type="password" id="reg-password" placeholder="Choose a password" required autocomplete="new-password" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="reg-confirm">Confirm Password <span class="required">*</span></label>
+            <input class="form-input" type="password" id="reg-confirm" placeholder="Re-enter your password" required autocomplete="new-password" />
+          </div>
+        </div>
+        <div class="form-error" id="reg-error" hidden></div>
+      </form>
+      <div class="modal-footer">
+        <button class="btn-ghost" id="register-cancel">Cancel</button>
+        <button class="btn-primary" id="register-save">
+          <span id="register-label">Create Account</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LOGS DRAWER ──────────────────────────────────────────────────── -->
+  <div id="logs-drawer" class="logs-drawer" hidden>
+    <div class="logs-drawer-header">
+      <h2 class="logs-drawer-title">Audit Logs</h2>
+      <div class="logs-drawer-controls">
+        <button class="btn-ghost logs-refresh" id="logs-refresh" title="Refresh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          Refresh
+        </button>
+        <button class="modal-close" id="logs-close" title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="logs-body" id="logs-body">
+      <div class="logs-loading">
+        <div class="spinner"></div>
+        <span>Loading logs…</span>
+      </div>
+    </div>
+  </div>
+  <div id="logs-backdrop" class="logs-backdrop" hidden></div>
 
   <!-- ── TOAST CONTAINER ───────────────────────────────────────────────── -->
   <div class="toast-container" id="toast-container"></div>
